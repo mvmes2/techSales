@@ -1,0 +1,70 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model Company {
+  id           String    @id @default(uuid())
+  company_name String
+  cnpj         String    @unique
+  owner_name   String
+  owner_email  String
+  product_key  String?
+  created_at   DateTime  @default(now())
+  deleted_at   DateTime?
+  updated_at   DateTime?
+  users        User[]
+  sessions     Session[]
+
+  @@index([company_name], name: "company_name_index")
+  @@index([cnpj], name: "company_cnpj_index")
+}
+
+model User {
+  id            String    @id @default(uuid())
+  company_id    String
+  company       Company   @relation(fields: [company_id], references: [id])
+  user_name     String
+  user_email    String
+  user_password String
+  user_cpf      String
+  user_level    Int       @default(1)
+  sessions      Session[]
+  created_at    DateTime  @default(now())
+  updated_at    DateTime?
+  deleted_at    DateTime?
+
+  @@unique([company_id, user_email], name: "unique_company_user_email")
+  @@unique([company_id, user_cpf], name: "unique_company_user_cpf")
+  @@index([company_id], name: "company_id_index")
+  @@index([company_id, user_email], name: "user_email_index")
+  @@index([company_id, user_cpf], name: "user_cpf_index")
+}
+
+model Session {
+  id         String    @id @default(uuid())
+  company_id String
+  company    Company   @relation(fields: [company_id], references: [id])
+  user_id    String
+  user       User      @relation(fields: [user_id], references: [id])
+  token      String // VARCHAR(999)
+  ip_address String
+  location   String
+  browser    String
+  created_at DateTime
+  updated_at DateTime?
+  deleted_at DateTime?
+
+  @@index([user_id], name: "user_id_index")
+  @@index([company_id], name: "company_id_index")
+}
